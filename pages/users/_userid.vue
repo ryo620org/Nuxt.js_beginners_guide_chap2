@@ -26,23 +26,30 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+
 export default {
   head() {
     return {
       title: this.user.id
     };
   },
-  async asyncData({ app, route }) {
-    const user = await app.$axios.$get(
-      `https://qiita.com/api/v2/users/${route.params.userid}`
-    );
-    const items = await app.$axios.$get(
-      `https://qiita.com/api/v2/items?query=user:${route.params.userid}`
-    );
-    return {
-      user,
-      items
-    };
+  async asyncData({ store, route, redirect }) {
+    if (store.getters["users"][route.params.userid]) return;
+    try {
+      await store.dispatch("fetchUserInfo", { userId: route.params.userid });
+    } catch (e) {
+      redirect("/");
+    }
+  },
+  computed: {
+    user() {
+      return this.users[this.$route.params.userid];
+    },
+    items() {
+      return this.userItems[this.$route.params.userid];
+    },
+    ...mapGetters(["users", "userItems"])
   }
 };
 </script>
